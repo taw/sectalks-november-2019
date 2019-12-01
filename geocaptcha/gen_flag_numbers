@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+
+require "json"
+require "pry"
+require "pathname"
+
+def forward(data, key_sequence)
+  prime = 104729
+  data = data.dup
+  key_sequence.each do |key|
+    (0...data.size).each do |i|
+      data[i] = (data[i] * 2 + i * 3 + key * 5) % prime
+    end
+  end
+  data
+end
+
+def backward(data, key_sequence)
+  prime = 104729
+  half = 52365
+  data = data.dup
+  key_sequence.reverse.each do |key|
+    (0...data.size).each do |i|
+      data[i] = ((data[i] - i * 3 - key * 5) * half) % prime
+    end
+  end
+  data
+end
+
+cities = JSON.parse(Pathname("#{__dir__}/app/src/cities.json").read)
+flag = Pathname("#{__dir__}/flag.txt").read.chomp
+
+key_sequence = [cities.size, *(1..20), cities.size]
+
+data = backward(flag.bytes, key_sequence)
+
+p data
+p forward(data, key_sequence).pack("U*")

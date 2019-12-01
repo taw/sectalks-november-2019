@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+
+require "pry"
+
+class String
+  def bits
+    bytes.flat_map{|n|
+      ("%08b" % n).chars.map(&:to_i)
+    }
+  end
+end
+
+def generate_character(a, b, c, d)
+  r = 0x2800
+  r += a[0] * 0x01
+  r += b[0] * 0x02
+  r += c[0] * 0x04
+  r += a[1] * 0x08
+  r += b[1] * 0x10
+  r += c[1] * 0x20
+  r += d[0] * 0x40
+  r += d[1] * 0x80
+  [r].pack("U*")
+end
+
+def slice_to_row(slice)
+  row = ""
+  # Pad to 160 bits, or 20 chars
+  slice = (slice + [0] * 160).take(160)
+  row0 = slice[0,40]
+  row1 = slice[40,40]
+  row2 = slice[80,40]
+  row3 = slice[120,40]
+  20.times do |i|
+    dp0 = row0[i*2, 2]
+    dp1 = row1[i*2, 2]
+    dp2 = row2[i*2, 2]
+    dp3 = row3[i*2, 2]
+    row << generate_character(dp0, dp1, dp2, dp3)
+  end
+  row + "\n"
+end
+
+def encrypt(data)
+  # 160 bits is 4 lines of 40 dots each
+  data.bits.each_slice(160).map{|slice| slice_to_row(slice) }.join
+end
+
+puts encrypt(ARGF.read)
+
